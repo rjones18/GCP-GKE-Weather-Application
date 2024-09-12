@@ -1,0 +1,4 @@
+#kubernetes resources to be managed by kustomize
+resources:
+  - pokemon-app-deployment.yaml
+  - pokemon-service.yaml

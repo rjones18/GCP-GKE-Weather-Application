@@ -1,0 +1,44 @@
+steps:
+# Unit Test Pre-Step
+- name: gcr.io/alert-flames-286515/pythonbaseimage:v3
+  entrypoint: python3
+  args:
+  - ./dockerbuild_image_code/test_app.py
+
+# Step 1: Build the Docker image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/gke-pokemon-app:v1', './dockerbuild_image_code']
+
+
+# Step 2: Push the Docker image to Google Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/gke-pokemon-app:v1']
+
+- id: 'Get Cluster Credentials'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args: ['-c', 'gcloud container clusters get-credentials my-gke-cluster --zone us-central1']
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /root/.profile
+      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      brew install kustomize
+
+
+- id: 'Deploy GCR Image to Kubernetes Cluster'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args: ['-c', 'kubectl apply -k kustomize']
+
+# Set the images output for this build
+images:
+- 'gcr.io/$PROJECT_ID/gke-pokemon-app:v1'
+
+options:
+  logging : CLOUD_LOGGING_ONLY
+timeout: 1600s

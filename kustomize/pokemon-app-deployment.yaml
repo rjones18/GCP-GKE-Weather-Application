@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pokedex-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pokedex-app
+  template:
+    metadata:
+      labels:
+        app: pokedex-app
+    spec:
+      containers:
+      - name: pokedex-app
+        image: gcr.io/alert-flames-286515/gke-pokemon-app:v1
+        ports:
+        - containerPort: 8080
