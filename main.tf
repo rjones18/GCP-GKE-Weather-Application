@@ -1,6 +1,6 @@
 resource "google_service_account" "default" {
-  account_id   = "gke-service-account"
-  display_name = "gke-service-account"
+  account_id   = "gke-service-account2"
+  display_name = "gke-service-account2"
 }
 
 resource "google_project_iam_binding" "gcr_bucket_access" {
@@ -11,25 +11,13 @@ resource "google_project_iam_binding" "gcr_bucket_access" {
   ]
 }
 
-# Define the network (VPC) and subnetwork (subnet)
-resource "google_compute_network" "vpc_network" {
-  name = "project-vpc"
-}
-
-resource "google_compute_subnetwork" "vpc_subnetwork" {
-  name          = "app-subnet-1"
-  region        = "us-central1"
-  network       = google_compute_network.vpc_network.id
-  ip_cidr_range = "10.0.10.0/24"
-}
-
 resource "google_container_cluster" "primary" {
   name     = "my-gke-cluster"
   location = "us-central1"
 
-  # Specify the VPC and Subnet
-  network    = google_compute_network.vpc_network.self_link
-  subnetwork = google_compute_subnetwork.vpc_subnetwork.self_link
+  # Reference existing VPC and Subnet
+  network    = "projects/alert-flames-286515/global/networks/project-vpc"  # Replace with your existing VPC's self-link or name
+  subnetwork = "projects/alert-flames-286515/regions/us-central1/subnetworks/app-subnet-1"  # Replace with your existing subnet's self-link or name
 
   remove_default_node_pool = true
   initial_node_count       = 1
@@ -41,7 +29,6 @@ resource "google_container_node_pool" "primary_preemptible_nodes" {
   cluster    = google_container_cluster.primary.name
   node_count = 1
 
-  # Specify the network and subnetwork for the node pool
   node_config {
     preemptible  = true
     machine_type = "e2-medium"
